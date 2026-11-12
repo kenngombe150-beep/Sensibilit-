@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>HACKEN FF – Générateur de sensibilité</title>
+<style>
+:root{--bg:#07080c;--panel:#10131b;--line:#232a3a;--txt:#e8ecf5;--mut:#7f8aa3;--red:#ff2d3d;--grn:#19ff8c;--yel:#ffd21f}
+*{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
+body{font-family:"Trebuchet MS",Verdana,sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;
+background-image:linear-gradient(rgba(25,255,140,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(25,255,140,.04) 1px,transparent 1px);background-size:28px 28px;
+padding:max(16px,env(safe-area-inset-top)) 16px max(24px,env(safe-area-inset-bottom))}
+.wrap{max-width:460px;margin:0 auto}
+h1{font-family:Impact,"Arial Black",sans-serif;font-size:2.6rem;letter-spacing:2px;text-align:center;line-height:1;margin:10px 0 4px}
+h1 span{color:var(--red)}
+.sub{text-align:center;color:var(--mut);font-size:.85rem;margin-bottom:18px}
+.card{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--red);border-radius:6px;padding:16px;margin-bottom:14px}
+label{display:block;font-size:.8rem;color:var(--mut);margin:0 0 6px}
+input,select{width:100%;background:#0a0c12;border:1px solid var(--line);color:var(--txt);padding:13px;border-radius:5px;font-size:1rem;margin-bottom:14px;font-family:inherit}
+input:focus,select:focus,button:focus-visible{outline:2px solid var(--grn);outline-offset:1px}
+.btn{width:100%;border:0;border-radius:5px;padding:14px;font-size:1.05rem;font-weight:bold;cursor:pointer;font-family:inherit}
+.go{background:var(--red);color:#fff}
+.go:active{transform:scale(.98)}
+.guild{display:block;text-align:center;text-decoration:none;background:var(--grn);color:#04130b;margin-top:2px}
+.links{display:flex;gap:10px}
+.links .guild{flex:1;padding:10px 8px;font-size:.88rem;margin-top:0}
+.links .contact{background:var(--yel)}
+.msg{font-size:.85rem;min-height:1.2em;margin:-6px 0 10px}
+.err{color:var(--red)}.ok{color:var(--grn)}
+.stats{display:flex;justify-content:space-between;font-size:.78rem;color:var(--mut);margin-bottom:14px}
+.stats b{color:var(--yel)}
+#res{display:none}
+.row{margin-bottom:12px}
+.row .top{display:flex;justify-content:space-between;font-size:.9rem;margin-bottom:5px}
+.row .top b{color:var(--grn);font-size:1.05rem}
+.bar{height:8px;background:#0a0c12;border-radius:4px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--red),var(--yel));transition:width .9s cubic-bezier(.2,.8,.2,1)}
+.head{font-family:Impact,sans-serif;font-size:1.3rem;margin-bottom:12px;letter-spacing:1px}
+.note{font-size:.75rem;color:var(--mut);line-height:1.4;margin-top:10px}
+.scan{height:6px;background:#0a0c12;border-radius:3px;overflow:hidden;margin-bottom:14px;display:none}
+.scan i{display:block;height:100%;width:0;background:var(--grn)}
+#admin{display:none}
+#admin textarea{width:100%;height:160px;background:#0a0c12;color:var(--grn);border:1px solid var(--line);border-radius:5px;padding:10px;font-size:.8rem}
+@media (prefers-reduced-motion:reduce){.bar i{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1 id="logo">HACKEN <span>FF</span></h1>
+  <p class="sub">Machine à sensibilité · Headshot</p>
+
+  <div class="card">
+    <label for="uid">ID Free Fire</label>
+    <input id="uid" inputmode="numeric" placeholder="Ex : 123456789" maxlength="12" autocomplete="off">
+
+    <label for="brand">Marque du téléphone</label>
+    <select id="brand"></select>
+
+    <label for="model">Modèle du téléphone</label>
+    <select id="model"></select>
+
+    <label for="code">Code d’accès (usage unique)</label>
+    <input id="code" placeholder="HFF-XXXX-XXXX" autocomplete="off" autocapitalize="characters" maxlength="13">
+
+    <div class="msg" id="msg"></div>
+    <div class="scan" id="scan"><i></i></div>
+    <button class="btn go" id="gen">GÉNÉRER LA SENSIBILITÉ</button>
+  </div>
+
+  <div class="stats"><span>Codes restants : <b id="left">…</b> / 1000</span><span>Chaque code expire après usage</span></div>
+
+  <div class="card" id="res" style="border-left-color:var(--grn)">
+    <div class="head" id="rtitle"></div>
+    <div id="rows"></div>
+    <p class="note">Ce sont des réglages recommandés pour viser la tête. Ajuste de 2 à 5 points selon ton écran et ta main, et teste en entraînement.</p>
+  </div>
+
+  <div class="links">
+    <a class="btn guild" href="https://chat.whatsapp.com/JaE8ZhynF7eGv1UqfKJY2t?s=cl&p=a&iam=2" target="_blank" rel="noopener">Guilde des Congolais</a>
+    <a class="btn guild contact" href="https://wa.me/243971160692" target="_blank" rel="noopener">Me contacter</a>
+  </div>
+
+  <div class="card" id="admin" style="margin-top:14px">
+    <div class="head">Admin · 1000 codes</div>
+    <textarea id="codes" readonly></textarea>
+    <button class="btn go" id="copy" style="margin-top:10px">Copier les codes</button>
+    <button class="btn" id="reset" style="margin-top:8px;background:#232a3a;color:var(--txt)">Régénérer 1000 nouveaux codes</button>
+    <p class="note">Un code utilisé est supprimé pour tout le monde. Quand il n’en reste plus, appuie sur « Régénérer » : les nouveaux codes sont actifs partout. Copie-les tout de suite, ils ne sont affichés qu’une fois.</p>
+  </div>
+</div>
+
+<script>
+const BRANDS=["Samsung","Xiaomi","Redmi","Poco","Tecno","Infinix","Itel","Oppo","Realme","Vivo","Huawei","Honor","iPhone","Google Pixel","OnePlus","Motorola","Nokia","Asus ROG","Lenovo","Autre"];
+const bs=document.getElementById('brand');
+BRANDS.forEach(b=>bs.add(new Option(b,b)));
+const ms=document.getElementById('model');
+const MODELS={
+"Samsung":["Galaxy A03","Galaxy A04","Galaxy A05","Galaxy A10","Galaxy A12","Galaxy A13","Galaxy A14","Galaxy A15","Galaxy A20","Galaxy A21s","Galaxy A22","Galaxy A23","Galaxy A24","Galaxy A25","Galaxy A30","Galaxy A31","Galaxy A32","Galaxy A33","Galaxy A34","Galaxy A35","Galaxy A50","Galaxy A51","Galaxy A52","Galaxy A53","Galaxy A54","Galaxy A55","Galaxy A70","Galaxy A71","Galaxy A72","Galaxy M12","Galaxy M21","Galaxy M31","Galaxy M32","Galaxy M51","Galaxy J2","Galaxy J7","Galaxy S9","Galaxy S10","Galaxy S20","Galaxy S21","Galaxy S22","Galaxy S23","Galaxy S24","Galaxy S25","Galaxy Note 9","Galaxy Note 10","Galaxy Note 20","Galaxy Z Flip","Galaxy Z Fold","Galaxy Tab"],
+"Xiaomi":["Mi 8","Mi 9","Mi 10","Mi 11","Xiaomi 12","Xiaomi 13","Xiaomi 14","Mi A2","Mi A3","Mi Mix","Black Shark"],
+"Redmi":["Redmi 8","Redmi 9","Redmi 9A","Redmi 9C","Redmi 10","Redmi 10C","Redmi 12","Redmi 12C","Redmi 13C","Redmi Note 8","Redmi Note 9","Redmi Note 10","Redmi Note 11","Redmi Note 12","Redmi Note 13","Redmi Note 14"],
+"Poco":["Poco C3","Poco C40","Poco C65","Poco M3","Poco M4 Pro","Poco M5","Poco M6","Poco X3 Pro","Poco X4 Pro","Poco X5","Poco X6","Poco F3","Poco F4","Poco F5","Poco F6"],
+"Tecno":["Spark 5","Spark 6","Spark 7","Spark 8","Spark 9","Spark 10","Spark 20","Spark Go","Camon 15","Camon 16","Camon 17","Camon 18","Camon 19","Camon 20","Camon 30","Pova","Pova 2","Pova 3","Pova 4","Pova 5","Pova 6","Phantom X","Phantom V"],
+"Infinix":["Hot 8","Hot 9","Hot 10","Hot 11","Hot 12","Hot 20","Hot 30","Hot 40","Note 7","Note 8","Note 10","Note 11","Note 12","Note 30","Note 40","Smart 5","Smart 6","Smart 7","Smart 8","Zero X","Zero 20","Zero 30"],
+"Itel":["A23","A48","A49","A56","A58","A60","P36","P37","P40","S18","S23","Vision 1","Vision 3","Vision 5"],
+"Oppo":["A15","A16","A17","A31","A54","A57","A58","A74","A78","A96","Reno 5","Reno 6","Reno 7","Reno 8","Reno 10","Reno 11","Find X3","Find X5","Find X7"],
+"Realme":["Realme C11","Realme C15","Realme C21","Realme C25","Realme C35","Realme C53","Realme C55","Realme 7","Realme 8","Realme 9","Realme 10","Realme 11","Realme 12","Realme GT","Realme GT Neo","Realme Narzo"],
+"Vivo":["Y12","Y15","Y20","Y21","Y22","Y27","Y36","V20","V21","V23","V25","V27","V29","V30","X60","X70","X80","X90","iQOO"],
+"Huawei":["P20","P30","P40","P50","P60","Mate 20","Mate 30","Mate 40","Nova 5","Nova 7","Nova 9","Nova 11","Y6","Y7","Y9"],
+"Honor":["Honor 8X","Honor 9X","Honor 10","Honor 20","Honor 50","Honor 70","Honor X7","Honor X8","Honor X9","Honor Magic"],
+"iPhone":["iPhone 6","iPhone 7","iPhone 8","iPhone X","iPhone XR","iPhone XS","iPhone 11","iPhone 12","iPhone 13","iPhone 14","iPhone 15","iPhone 16","iPhone SE","iPad"],
+"Google Pixel":["Pixel 3","Pixel 4","Pixel 5","Pixel 6","Pixel 7","Pixel 8","Pixel 9"],
+"OnePlus":["OnePlus 6","OnePlus 7","OnePlus 8","OnePlus 9","OnePlus 10","OnePlus 11","OnePlus 12","OnePlus Nord"],
+"Motorola":["Moto G7","Moto G8","Moto G9","Moto G10","Moto G20","Moto G30","Moto G54","Moto E7","Moto E13","Moto Edge"],
+"Nokia":["Nokia 2.4","Nokia 3.4","Nokia 5.4","Nokia G10","Nokia G20","Nokia C21","Nokia X20"],
+"Asus ROG":["ROG Phone 2","ROG Phone 3","ROG Phone 5","ROG Phone 6","ROG Phone 7","ROG Phone 8","Zenfone"],
+"Lenovo":["Lenovo K10","Lenovo K13","Lenovo Legion","Lenovo Tab"],
+"Autre":[]
+};
+function fillModels(){
+  ms.innerHTML="";
+  (MODELS[bs.value]||[]).forEach(m=>ms.add(new Option(m,m)));
+  ms.add(new Option("Autre modèle","Autre modèle"));
+}
+bs.onchange=fillModels;fillModels();
+
+// 1000 codes générés de façon fixe (même liste à chaque ouverture)
+function rng(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const CH="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+// >>> COLLE ICI L'URL DE TA BASE FIREBASE (voir les étapes) <<<
+const DB="https://mukaya-18c56-default-rtdb.europe-west1.firebasedatabase.app";
+function genCodes(){const s=new Set(),b=new Uint32Array(8);while(s.size<1000){crypto.getRandomValues(b);let c="";for(let i=0;i<8;i++)c+=CH[b[i]%CH.length];s.add("HFF-"+c.slice(0,4)+"-"+c.slice(4))}return[...s]}
+async function sha(t){const d=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t));return[...new Uint8Array(d)].map(x=>x.toString(16).padStart(2,'0')).join('')}
+const ready=()=>DB.startsWith("https://");
+async function api(path,method,body){const r=await fetch(DB.replace(/\/$/,"")+path+".json",{method:method||'GET',body:body?JSON.stringify(body):undefined});if(!r.ok)throw 0;return r.json()}
+let LEFT=0;
+async function refresh(){const l=document.getElementById('left');if(!ready()){l.textContent="?";return}try{const k=await api("/codes?shallow=true");LEFT=k?Object.keys(k).length:0;l.textContent=LEFT}catch(e){l.textContent="?"}}
+
+refresh();
+
+function hash(s){let h=2166136261;for(const c of s){h^=c.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0}
+const SCREEN={"iPhone":6,"Samsung":3,"Google Pixel":3,"OnePlus":3,"Asus ROG":4,"Xiaomi":1,"Redmi":0,"Poco":2,"Tecno":-3,"Infinix":-3,"Itel":-5,"Oppo":0,"Realme":0,"Vivo":0,"Huawei":-1,"Honor":0,"Motorola":-2,"Nokia":-4,"Lenovo":-1,"Autre":0};
+
+function make(uid,brand,model){
+  const r=rng(hash(uid+"|"+brand+"|"+model));
+  const hi=/S2\d|Note 20|Fold|Flip|Pro|Max|Pixel [6-9]|iPhone 1[3-6]|ROG|Legion|GT|Black Shark|Find|X\d0|Mate|P[456]0/i.test(model);
+  const lo=/A0\d|A1[0-3]|C\d\d|Hot [89]|Smart|Spark [5-8]|Go|J\d|Redmi [89]A?|Itel|Nokia|Moto E/i.test(model)||brand==="Itel";
+  const adj=(SCREEN[brand]||0)+(hi?2:0)-(lo?2:0);
+  const v=(base,spread)=>Math.max(1,Math.min(100,Math.round(base+adj+(r()-.5)*spread*2)));
+  return [
+    ["Général",v(92,4)],["Point rouge",v(90,5)],["Lunette 2x",v(86,5)],
+    ["Lunette 4x",v(82,6)],["Lunette AWM",v(48,8)],["Regard (caméra)",v(94,3)]
+  ];
+}
+function msg(t,c){const m=document.getElementById('msg');m.textContent=t;m.className='msg '+(c||'')}
+
+document.getElementById('gen').onclick=async()=>{
+  const uid=document.getElementById('uid').value.trim();
+  const code=document.getElementById('code').value.trim().toUpperCase();
+  const brand=bs.value,model=ms.value;
+  document.getElementById('res').style.display='none';
+  if(!/^\d{6,12}$/.test(uid)) return msg("ID invalide : 6 à 12 chiffres.","err");
+  if(!ready()) return msg("Le site n’est pas encore connecté à la base de données.","err");
+  try{
+    const h=await sha(code);
+    if(!(await api("/codes/"+h))){
+      await refresh();
+      return msg(LEFT===0?"Tous les codes sont épuisés. L’admin doit en régénérer.":"Code incorrect ou expiré (déjà utilisé).","err");
+    }
+    await api("/codes/"+h,"DELETE");
+  }catch(e){return msg("Connexion impossible. Réessaie.","err")}
+  msg("");
+  const sc=document.getElementById('scan'),bar=sc.firstElementChild;
+  sc.style.display='block';bar.style.transition='none';bar.style.width='0';
+  requestAnimationFrame(()=>{bar.style.transition='width 1.8s linear';bar.style.width='100%'});
+  const btn=document.getElementById('gen');btn.disabled=true;btn.textContent="ANALYSE EN COURS…";
+  setTimeout(()=>{
+    refresh();
+    sc.style.display='none';btn.disabled=false;btn.textContent="GÉNÉRER LA SENSIBILITÉ";
+    document.getElementById('code').value="";
+    msg("Code accepté. Il est maintenant expiré.","ok");
+    document.getElementById('rtitle').textContent="ID "+uid+" · "+brand+" "+model;
+    const rows=document.getElementById('rows');rows.innerHTML="";
+    make(uid,brand,model).forEach(([n,val])=>{
+      const d=document.createElement('div');d.className='row';
+      d.innerHTML='<div class="top"><span>'+n+'</span><b>'+val+'</b></div><div class="bar"><i></i></div>';
+      rows.appendChild(d);
+      setTimeout(()=>d.querySelector('i').style.width=val+'%',50);
+    });
+    document.getElementById('res').style.display='block';
+    document.getElementById('res').scrollIntoView({behavior:'smooth'});
+  },1900);
+};
+
+// Admin : touche 5 fois le logo
+let taps=0,tt;
+document.getElementById('logo').onclick=()=>{
+  taps++;clearTimeout(tt);tt=setTimeout(()=>taps=0,1500);
+  if(taps>=5){taps=0;const p=prompt("Mot de passe admin");if(p==="congo2026"){
+    const a=document.getElementById('admin');a.style.display='block';
+    document.getElementById('codes').value="Les codes s’affichent ici seulement au moment de la génération. Appuie sur « Régénérer » pour en créer 1000 nouveaux.";
+    a.scrollIntoView({behavior:'smooth'})}}
+};
+document.getElementById('copy').onclick=()=>{const t=document.getElementById('codes');t.select();try{document.execCommand('copy')}catch(e){}};
+document.getElementById('reset').onclick=async()=>{
+  if(!ready()) return alert("Colle d’abord l’URL Firebase dans le fichier (ligne DB).");
+  if(!confirm("Générer 1000 nouveaux codes pour tout le monde ? Les anciens codes restants seront supprimés.")) return;
+  const btn=document.getElementById('reset');btn.disabled=true;btn.textContent="Génération…";
+  try{
+    const list=genCodes(),obj={};
+    for(const c of list) obj[await sha(c)]=true;
+    await api("/codes","PUT",obj);
+    document.getElementById('codes').value=list.join("\n");
+    await refresh();
+    alert("1000 nouveaux codes actifs chez tout le monde. Copie-les maintenant : ils ne seront plus affichés après.");
+  }catch(e){alert("Échec : vérifie l’URL Firebase et les règles de la base.")}
+  btn.disabled=false;btn.textContent="Régénérer 1000 nouveaux codes";
+};
+</script>
+</body>
+      </html>
